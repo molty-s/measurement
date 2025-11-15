@@ -34,3 +34,5 @@ Thumbs.db
 
 # --- Rider/Gradle (Android触る場合)
 .gradle/
+
+BuildTest/
