@@ -19,6 +19,10 @@ public class DownwardHeightMeter : MonoBehaviour
     [Tooltip("移動平均に使うサンプル数。値が大きいほど表示がなめらかになる。")]
     public int smoothingWindow = 5;
 
+    // PlaneWithinPolygon + PlaneEstimated を対象にする
+    private const TrackableType RaycastTypes =
+        TrackableType.PlaneWithinPolygon | TrackableType.PlaneEstimated;
+
     // 毎フレーム new しないように共有バッファを持つ
     private static readonly List<ARRaycastHit> hits = new();
     private readonly List<float> recent = new();
@@ -30,9 +34,15 @@ public class DownwardHeightMeter : MonoBehaviour
         // 画面中央から床に向けてレイキャスト
         Vector2 center = new(Screen.width * 0.5f, Screen.height * 0.5f);
 
-        if (raycastManager.Raycast(center, hits, TrackableType.PlaneWithinPolygon))
+        if (raycastManager.Raycast(center, hits, RaycastTypes))
         {
             var hit = hits[0];
+
+            bool isConfirmedPlane =
+                (hit.hitType & TrackableType.PlaneWithinPolygon) != 0;
+            bool isEstimatedPlane =
+                !isConfirmedPlane && (hit.hitType & TrackableType.PlaneEstimated) != 0;
+
             Vector3 camPos = arCamera.transform.position;
             Vector3 hitPos = hit.pose.position;
 
@@ -42,22 +52,33 @@ public class DownwardHeightMeter : MonoBehaviour
             // 端末カメラのオフセットを補正して、0未満にならないように
             float height = Mathf.Max(0f, rawHeight - cameraOffsetMeters);
 
-            Push(height);
-            float smoothed = Avg();
+            if (isConfirmedPlane)
+            {
+                // ★ 確定した平面のときだけスムージングして本気の値にする
+                Push(height);
+                float smoothed = Avg();
 
-            // 目標との差を cm で
-            float deltaCm = (smoothed - targetMeters) * 100f;
-            string sign = deltaCm >= 0 ? "+" : "−";
+                // 目標との差を cm で
+                float deltaCm = (smoothed - targetMeters) * 100f;
+                string sign = deltaCm >= 0 ? "+" : "−";
 
-            // 目標との差で色を変える
-            string color =
-                Mathf.Abs(deltaCm) <= 1f ? "#39D353" :   // ±1cm 以内 → 緑
-                Mathf.Abs(deltaCm) <= 3f ? "#F1E05A" :   // ±3cm 以内 → 黄
-                "#FF4D4F";                               // それ以上 → 赤
+                // 目標との差で色を変える
+                string color =
+                    Mathf.Abs(deltaCm) <= 1f ? "#39D353" :   // ±1cm 以内 → 緑
+                    Mathf.Abs(deltaCm) <= 3f ? "#F1E05A" :   // ±3cm 以内 → 黄
+                    "#FF4D4F";                               // それ以上 → 赤
 
-            resultLabel.text =
-                $"<color={color}>高さ {smoothed:F3} m\n" +
-                $"目標との差 {sign}{Mathf.Abs(deltaCm):F1} cm</color>";
+                resultLabel.text =
+                    $"<color={color}>高さ {smoothed:F3} m（確定）\n" +
+                    $"目標との差 {sign}{Mathf.Abs(deltaCm):F1} cm</color>";
+            }
+            else if (isEstimatedPlane)
+            {
+                // ★ 推定Planeの間はそのままの値＋「推定中」表示
+                resultLabel.text =
+                    $"高さ {height:F3} m（推定中…）";
+                // 推定中の値はスムージングには入れない（確定値をきれいに保つため）
+            }
         }
         else
         {
