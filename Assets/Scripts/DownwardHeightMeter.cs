@@ -82,7 +82,7 @@ public class DownwardHeightMeter : MonoBehaviour
         }
         else
         {
-            resultLabel.text = "床を検出しています…端末をゆっくり動かして床をスキャンしてください。";
+            resultLabel.text = "床を検出しています… \n端末をゆっくり動かして床をスキャンしてください。";
         }
     }
 
