@@ -13,7 +13,7 @@ public class DownwardHeightMeter : MonoBehaviour
 
     [Header("Settings")]
     [Tooltip("端末カメラ位置の補正（m）。端末のカメラが上端にあるぶんだけ差し引く。")]
-    public float cameraOffsetMeters = 0.018f;   // 例: 1.8cm
+    public float cameraOffsetMeters = 0f;
     [Tooltip("目標高さ（m）。例: テニスネット3ft = 約0.914m。")]
     public float targetMeters = 0.914f;
     [Tooltip("移動平均に使うサンプル数。値が大きいほど表示がなめらかになる。")]
