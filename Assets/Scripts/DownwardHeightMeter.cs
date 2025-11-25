@@ -8,15 +8,17 @@ public class DownwardHeightMeter : MonoBehaviour
 {
     [Header("Refs")]
     [SerializeField] private ARRaycastManager raycastManager;   // XR Origin に付いている
-    [SerializeField] private ARPlaneManager planeManager;       // ★ 追加: XR Origin の ARPlaneManager
+    [SerializeField] private ARPlaneManager planeManager;       // XR Origin の ARPlaneManager
     [SerializeField] private Camera arCamera;                   // XR Origin の子 "Main Camera"
     [SerializeField] private TextMeshProUGUI resultLabel;       // Canvas の Text (TMP)
 
     [Header("Settings")]
     [Tooltip("端末カメラ位置の補正（m）。端末のカメラが上端にあるぶんだけ差し引く。")]
     public float cameraOffsetMeters = 0.0f;   // まずは 0 で様子を見るのがおすすめ
+
     [Tooltip("目標高さ（m）。例: テニスネット3ft = 約0.914m。")]
     public float targetMeters = 0.914f;
+
     [Tooltip("移動平均に使うサンプル数。値が大きいほど表示がなめらかになる。")]
     public int smoothingWindow = 5;
 
@@ -28,7 +30,7 @@ public class DownwardHeightMeter : MonoBehaviour
     private static readonly List<ARRaycastHit> hits = new();
     private readonly List<float> recent = new();
 
-    // 「高さに使っている平面」の ID（今表示したい Plane）
+    // 「高さ計算に使っている平面」の ID
     private TrackableId? currentPlaneId = null;
 
     void Update()
@@ -50,29 +52,29 @@ public class DownwardHeightMeter : MonoBehaviour
             Vector3 camPos = arCamera.transform.position;
             Vector3 hitPos = hit.pose.position;
 
-            // 垂直方向の高さ（Y座標の差）を使う
+            // 垂直方向の高さ（Y座標の差）
             float rawHeight = Mathf.Abs(camPos.y - hitPos.y);
-
-            // 端末カメラのオフセットを補正して、0未満にならないように
             float height = Mathf.Max(0f, rawHeight - cameraOffsetMeters);
 
-            // ★ 確定した平面が取れたときだけ、その Plane だけ表示する
+            // ◆ 表示制御：確定 Plane だけ表示、それ以外は消す
             if (isConfirmedPlane && planeManager != null)
             {
-                ShowOnlyPlane(hit.trackableId);
+                ShowOnlyPlane(hit.trackableId);   // ← この plane だけ Active
+            }
+            else
+            {
+                HideAllPlanes();                  // ← 推定中やヒットはしたけど Plane じゃない時は全部消す
             }
 
+            // ◆ テキスト表示
             if (isConfirmedPlane)
             {
-                // ★ 確定した平面のときだけスムージングして本気の値にする
                 Push(height);
                 float smoothed = Avg();
 
-                // 目標との差を cm で
                 float deltaCm = (smoothed - targetMeters) * 100f;
                 string sign = deltaCm >= 0 ? "+" : "−";
 
-                // 目標との差で色を変える
                 string color =
                     Mathf.Abs(deltaCm) <= 1f ? "#39D353" :   // ±1cm 以内 → 緑
                     Mathf.Abs(deltaCm) <= 3f ? "#F1E05A" :   // ±3cm 以内 → 黄
@@ -84,28 +86,26 @@ public class DownwardHeightMeter : MonoBehaviour
             }
             else if (isEstimatedPlane)
             {
-                // ★ 推定Planeの間はそのままの値＋「推定中」表示
-                resultLabel.text =
-                    $"高さ {height:F3} m（推定中…）";
-                // 推定中の値はスムージングには入れない（確定値をきれいに保つため）
+                resultLabel.text = $"高さ {height:F3} m（推定中…）";
             }
         }
         else
         {
-            currentPlaneId = null; // 平面が取れなかったのでリセット
+            // そもそも何もヒットしなかったフレーム → 平面も全部消す
+            HideAllPlanes();
             resultLabel.text =
                 "床を検出しています… \n端末をゆっくり動かして床をスキャンしてください。";
         }
     }
 
     /// <summary>
-    /// 測定に使っている trackableId の平面「だけ」表示し、それ以外を非表示にする
+    /// 測定に使っている trackableId の平面だけ Active にし、それ以外は非表示。
     /// </summary>
     private void ShowOnlyPlane(TrackableId id)
     {
         if (planeManager == null) return;
 
-        // 同じ平面なら何もしない（毎フレーム全部いじるのを避ける）
+        // 同じ plane なら毎フレームいじらないで終了
         if (currentPlaneId.HasValue && currentPlaneId.Value == id) return;
         currentPlaneId = id;
 
@@ -113,6 +113,21 @@ public class DownwardHeightMeter : MonoBehaviour
         {
             bool active = plane.trackableId == id;
             plane.gameObject.SetActive(active);
+        }
+    }
+
+    /// <summary>
+    /// すべての平面を非表示にする。
+    /// </summary>
+    private void HideAllPlanes()
+    {
+        if (planeManager == null) return;
+
+        currentPlaneId = null;
+        foreach (var plane in planeManager.trackables)
+        {
+            if (plane.gameObject.activeSelf)
+                plane.gameObject.SetActive(false);
         }
     }
 
