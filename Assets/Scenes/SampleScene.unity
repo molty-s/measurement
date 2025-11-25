@@ -231,9 +231,8 @@ GameObject:
   m_Component:
   - component: {fileID: 143372416}
   - component: {fileID: 143372415}
-  - component: {fileID: 143372414}
   - component: {fileID: 143372413}
-  - component: {fileID: 143372412}
+  - component: {fileID: 143372417}
   m_Layer: 0
   m_Name: XR Origin
   m_TagString: Untagged
@@ -241,24 +240,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &143372412
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 143372411}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a09ef5719b1a47c44a0502aeb9bdba72, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DownwardHeightMeter
-  raycastManager: {fileID: 143372413}
-  arCamera: {fileID: 1129633455}
-  resultLabel: {fileID: 756024148}
-  cameraOffsetMeters: 0.018
-  targetMeters: 0.914
-  smoothingWindow: 5
 --- !u!114 &143372413
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -275,23 +256,6 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_RaycastPrefab: {fileID: 0}
---- !u!114 &143372414
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 143372411}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e1760703bbd54c04488a8d10600262ab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.XR.ARFoundation::UnityEngine.XR.ARFoundation.ARPlaneManager
-  <trackablesChanged>k__BackingField:
-    m_PersistentCalls:
-      m_Calls: []
-  m_PlanePrefab: {fileID: 0}
-  m_DetectionMode: 1
 --- !u!114 &143372415
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -326,6 +290,23 @@ Transform:
   - {fileID: 1861441286}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &143372417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 143372411}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1760703bbd54c04488a8d10600262ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.XR.ARFoundation::UnityEngine.XR.ARFoundation.ARPlaneManager
+  <trackablesChanged>k__BackingField:
+    m_PersistentCalls:
+      m_Calls: []
+  m_PlanePrefab: {fileID: 897064684432125269, guid: efde5a7bf8c34b8468ab3579ce580079, type: 3}
+  m_DetectionMode: -1
 --- !u!1 &199128651
 GameObject:
   m_ObjectHideFlags: 0
@@ -1226,6 +1207,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1638021382}
   - component: {fileID: 1638021383}
+  - component: {fileID: 1638021384}
   m_Layer: 0
   m_Name: DownwardHeightMeter
   m_TagString: Untagged
@@ -1260,12 +1242,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a09ef5719b1a47c44a0502aeb9bdba72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DownwardHeightMeter
-  raycastManager: {fileID: 0}
-  arCamera: {fileID: 0}
-  resultLabel: {fileID: 0}
+  raycastManager: {fileID: 143372413}
+  planeManager: {fileID: 143372417}
+  arCamera: {fileID: 1129633455}
+  resultLabel: {fileID: 756024148}
   cameraOffsetMeters: 0.018
   targetMeters: 0.914
   smoothingWindow: 5
+--- !u!114 &1638021384
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1638021381}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0cb9aa70a22847b5925ee5f067c10a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.XR.CoreUtils::Unity.XR.CoreUtils.XROrigin
+  m_Camera: {fileID: 1129633455}
+  m_OriginBaseGameObject: {fileID: 1638021381}
+  m_CameraFloorOffsetObject: {fileID: 0}
+  m_RequestedTrackingOriginMode: 0
+  m_CameraYOffset: 1.1176
 --- !u!1 &1861441285
 GameObject:
   m_ObjectHideFlags: 0

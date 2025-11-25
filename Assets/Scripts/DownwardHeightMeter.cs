@@ -8,12 +8,13 @@ public class DownwardHeightMeter : MonoBehaviour
 {
     [Header("Refs")]
     [SerializeField] private ARRaycastManager raycastManager;   // XR Origin に付いている
+    [SerializeField] private ARPlaneManager planeManager;       // ★ 追加: XR Origin の ARPlaneManager
     [SerializeField] private Camera arCamera;                   // XR Origin の子 "Main Camera"
     [SerializeField] private TextMeshProUGUI resultLabel;       // Canvas の Text (TMP)
 
     [Header("Settings")]
     [Tooltip("端末カメラ位置の補正（m）。端末のカメラが上端にあるぶんだけ差し引く。")]
-    public float cameraOffsetMeters = 0f;
+    public float cameraOffsetMeters = 0.0f;   // まずは 0 で様子を見るのがおすすめ
     [Tooltip("目標高さ（m）。例: テニスネット3ft = 約0.914m。")]
     public float targetMeters = 0.914f;
     [Tooltip("移動平均に使うサンプル数。値が大きいほど表示がなめらかになる。")]
@@ -26,6 +27,9 @@ public class DownwardHeightMeter : MonoBehaviour
     // 毎フレーム new しないように共有バッファを持つ
     private static readonly List<ARRaycastHit> hits = new();
     private readonly List<float> recent = new();
+
+    // 「高さに使っている平面」の ID（今表示したい Plane）
+    private TrackableId? currentPlaneId = null;
 
     void Update()
     {
@@ -51,6 +55,12 @@ public class DownwardHeightMeter : MonoBehaviour
 
             // 端末カメラのオフセットを補正して、0未満にならないように
             float height = Mathf.Max(0f, rawHeight - cameraOffsetMeters);
+
+            // ★ 確定した平面が取れたときだけ、その Plane だけ表示する
+            if (isConfirmedPlane && planeManager != null)
+            {
+                ShowOnlyPlane(hit.trackableId);
+            }
 
             if (isConfirmedPlane)
             {
@@ -82,7 +92,27 @@ public class DownwardHeightMeter : MonoBehaviour
         }
         else
         {
-            resultLabel.text = "床を検出しています… \n端末をゆっくり動かして床をスキャンしてください。";
+            currentPlaneId = null; // 平面が取れなかったのでリセット
+            resultLabel.text =
+                "床を検出しています… \n端末をゆっくり動かして床をスキャンしてください。";
+        }
+    }
+
+    /// <summary>
+    /// 測定に使っている trackableId の平面「だけ」表示し、それ以外を非表示にする
+    /// </summary>
+    private void ShowOnlyPlane(TrackableId id)
+    {
+        if (planeManager == null) return;
+
+        // 同じ平面なら何もしない（毎フレーム全部いじるのを避ける）
+        if (currentPlaneId.HasValue && currentPlaneId.Value == id) return;
+        currentPlaneId = id;
+
+        foreach (var plane in planeManager.trackables)
+        {
+            bool active = plane.trackableId == id;
+            plane.gameObject.SetActive(active);
         }
     }
 
